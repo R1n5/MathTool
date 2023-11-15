@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>データの統計量と外れ値判定</title>
+</head>
+<body>
+
+	<h1>データの統計量と外れ値判定</h1>
+
+	<p>データをカンマ区切りか半角スペースで入力してください（例：1,2,3,4,5）:</p>
+	<input type="text" id="inputData">
+	<br /><br />
+
+	<button onclick="calculate()">計算する</button>
+
+	<h2>結果</h2>
+
+	<p>最小値: <span id="min"></span></p>
+	<p>第一四分位数: <span id="q1"></span></p>
+	<p>中央値: <span id="median"></span></p>
+	<p>第三四分位数: <span id="q3"></span></p>
+	<p>最大値: <span id="max"></span></p>
+	<p>四分位範囲: <span id="iqr"></span></p>
+	<p>最大値は外れ値か？ <span id="isMaxOutlier"></span></p>
+	<p>最小値は外れ値か？ <span id="isMinOutlier"></span></p>
+	<p>外れ値の数: <span id="numOutliers"></span></p>
+	<p>外れ値の値: <span id="outliers"></span></p>
+	<p>平均値: <span id="mean"></span></p>
+	<p>各値の2乗の平均値: <span id="meanSquare"></span></p>
+	<p>分散: <span id="variance"></span></p>
+	<p>標準偏差: <span id="standardDeviation"></span></p>
+	<p>各値の偏差の２乗の和: <span id="deviationSquareSum"></span></p>
+
+	<script>
+		function calculate() {
+			var inputData = document.getElementById("inputData").value;
+			var dataArray = inputData.split(/[,\s]+/).map(Number).sort(function(a, b){return a-b});
+
+			var min = dataArray[0];
+			var q1 = getPercentile(dataArray, 25);
+			var median = getPercentile(dataArray, 50);
+			var q3 = getPercentile(dataArray, 75);
+			var max = dataArray[dataArray.length - 1];
+			var iqr = q3 - q1;
+			var lowerFence = q1 - 1.5 * iqr;
+			var upperFence = q3 + 1.5 * iqr;
+			var numOutliers = 0;
+			var outliers = [];
+
+			for (var i = 0; i < dataArray.length; i++) {
+				if (dataArray[i] < lowerFence || dataArray[i] > upperFence) {
+					numOutliers++;
+					outliers.push(dataArray[i]);
+				}
+			}
+
+			var isMaxOutlier = max > upperFence ? "はい" : "いいえ";
+			var isMinOutlier = min < lowerFence ? "はい" : "いいえ";
+
+			var mean = calculateMean(dataArray);
+			var meanSquare = calculateMeanSquare(dataArray);
+			var variance = calculateVariance(dataArray, mean);
+			var standardDeviation = Math.sqrt(variance);
+			var deviationSquareSum = calculateDeviationSquareSum(dataArray, mean);
+
+			document.getElementById("min").innerHTML = min;
+			document.getElementById("q1").innerHTML = q1;
+			document.getElementById("median").innerHTML = median;
+			document.getElementById("q3").innerHTML = q3;
+			document.getElementById("max").innerHTML = max;
+			document.getElementById("iqr").innerHTML = iqr;
+			document.getElementById("isMaxOutlier").innerHTML = isMaxOutlier;
+			document.getElementById("isMinOutlier").innerHTML = isMinOutlier;
+			document.getElementById("numOutliers").innerHTML = numOutliers === 0 ? "0個": numOutliers + "個";
+			document.getElementById("outliers").innerHTML = numOutliers === 0 ? "-" : outliers.join(", ");
+			document.getElementById("mean").innerHTML = mean.toFixed(2);
+			document.getElementById("meanSquare").innerHTML = meanSquare.toFixed(2);
+			document.getElementById("variance").innerHTML = variance.toFixed(2);
+			document.getElementById("standardDeviation").innerHTML = standardDeviation.toFixed(2);
+			document.getElementById("deviationSquareSum").innerHTML = deviationSquareSum.toFixed(2);
+		}
+
+		function getPercentile(data, percentile) {
+			var index = (percentile/100) * (data.length-1);
+			if (Math.floor(index) == index) {
+				return data[index];
+			} else {
+				var lower = data[Math.floor(index)];
+				var upper = data[Math.ceil(index)];
+				return lower + (upper-lower) * (index - Math.floor(index));
+			}
+		}
+
+		function calculateMean(data) {
+			var sum = 0;
+			for (var i = 0; i < data.length; i++) {
+				sum += data[i];
+			}
+			return sum / data.length;
+		}
+
+		function calculateMeanSquare(data) {
+			var squareSum = 0;
+			for (var i = 0; i < data.length; i++) {
+				squareSum += Math.pow(data[i], 2);
+			}
+			return squareSum / data.length;
+		}
+
+		function calculateVariance(data, mean) {
+			var deviationSquareSum = 0;
+			for (var i = 0; i < data.length; i++) {
+				var deviation = data[i] - mean;
+				deviationSquareSum += Math.pow(deviation, 2);
+			}
+			return deviationSquareSum / data.length;
+		}
+
+		function calculateDeviationSquareSum(data, mean) {
+			var deviationSquareSum = 0;
+			for (var i = 0; i < data.length; i++) {
+				var deviation = data[i] - mean;
+				deviationSquareSum += Math.pow(deviation, 2);
+			}
+			return deviationSquareSum;
+		}
+	</script>
+</body>
+</html>
